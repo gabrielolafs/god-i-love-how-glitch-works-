@@ -79,7 +79,7 @@ async function handleCheckboxChange(event) {
     }
 }
 
-const submit = async function(event) {
+async function submit(event) {
     event.preventDefault();
 
     // Check if the user is authenticated
@@ -99,25 +99,32 @@ const submit = async function(event) {
 
     // checking for no dupe tasks
     const response = await fetch('/tasks');
-    const data = await response.json();
-    const isDuplicate = data.some(task => task.task === object.task);
+    const responseText = await response.text();
+    console.log('Response Text:', responseText);
 
-    if (isDuplicate) {
-        alert('No duplicates allowed: Task already exists.');
-        return;
+    try {
+        const data = JSON.parse(responseText);
+        const isDuplicate = data.some(task => task.task === object.task);
+
+        if (isDuplicate) {
+            alert('No duplicates allowed: Task already exists.');
+            return;
+        }
+
+        const body = JSON.stringify(object);
+
+        await fetch("/submit", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body
+        });
+
+        await updateTable();
+    } catch (error) {
+        console.error('Failed to parse JSON:', error);
     }
-
-    const body = JSON.stringify(object);
-
-    await fetch("/submit", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body
-    });
-
-    await updateTable();
 }
 
 async function fetchUserInfo() {
