@@ -8,8 +8,11 @@ const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// const mongoURI = 'mongodb+srv://ggolafsson:ap5qqlcvidW5s0uV@cluster0.mongodb.net/Cluster0?retryWrites=true&w=majority';
+const mongoURI = "mongodb+srv://ggolafsson:ap5qqlcvidW5s0uV@cluster0.g3ygk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/assignmentTracker', { useNewUrlParser: true, useUnifiedTopology: true });
+// mongoose.connect('mongodb://localhost:27017/assignmentTracker', { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 // Define User schema and model
 const userSchema = new mongoose.Schema({
