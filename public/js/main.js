@@ -10,33 +10,33 @@ async function updateTable() {
     const responseText = await response.text();
     console.log('Response Text:', responseText);
 
-    // try {
-    //     const data = JSON.parse(responseText);
-    //     const tableBody = document.querySelector('#completedTasksBody');
-    //     tableBody.innerHTML = '';
-    //     data.forEach(item => {
-    //         const row = document.createElement('tr');
-    //         row.innerHTML = `
-    //             <td><input type="checkbox" ${item.complete === 'on' ? 'checked' : ''} data-task="${item.task}"></td>
-    //             <td>${daysUntilDue(item.dueDate)}</td>
-    //             <td>${item.task}</td>
-    //             <td>${item.priority}</td>
-    //             <td>${item.dueDate.split('T')[0]}</td>
-    //             <td><button class="delete-btn" data-task="${item.task}">🗑️</button></td>
-    //         `;
-    //         tableBody.appendChild(row);
-    //     });
-    //
-    //     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
-    //         checkbox.addEventListener('change', handleCheckboxChange);
-    //     });
-    //
-    //     document.querySelectorAll('.delete-btn').forEach(button => {
-    //         button.addEventListener('click', handleDeleteTask);
-    //     });
-    // } catch (error) {
-    //     console.error('Failed to parse JSON:', error);
-    // }
+    try {
+        const data = JSON.parse(responseText);
+        const tableBody = document.querySelector('#completedTasksBody');
+        tableBody.innerHTML = '';
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><input type="checkbox" ${item.complete === 'on' ? 'checked' : ''} data-task="${item.task}"></td>
+                <td>${daysUntilDue(item.dueDate)}</td>
+                <td>${item.task}</td>
+                <td>${item.priority}</td>
+                <td>${item.dueDate.split('T')[0]}</td>
+                <td><button class="delete-btn" data-task="${item.task}">🗑️</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', handleCheckboxChange);
+        });
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', handleDeleteTask);
+        });
+    } catch (error) {
+        console.error('Failed to parse JSON:', error);
+    }
 }
 
 async function handleDeleteTask(event) {
