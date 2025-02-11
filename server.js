@@ -8,11 +8,16 @@ const session = require('express-session');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// const mongoURI = 'mongodb+srv://ggolafsson:ap5qqlcvidW5s0uV@cluster0.mongodb.net/Cluster0?retryWrites=true&w=majority';
+// Replace with your MongoDB Atlas connection string
 const mongoURI = "mongodb+srv://ggolafsson:ap5qqlcvidW5s0uV@cluster0.g3ygk.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+
 // Connect to MongoDB
-// mongoose.connect('mongodb://localhost:27017/assignmentTracker', { useNewUrlParser: true, useUnifiedTopology: true });
-mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true });
+mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => console.log('MongoDB connected'))
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    });
 
 // Define User schema and model
 const userSchema = new mongoose.Schema({
@@ -41,17 +46,15 @@ app.use(passport.session());
 
 passport.use(new LocalStrategy(
     async (username, password, done) => {
-        const user = await User.findOne({ username });
-        if (!user || user.password !== password) {
-            if (!user) {
-                console.log('User not found');
+        try {
+            const user = await User.findOne({ username });
+            if (!user || user.password !== password) {
+                return done(null, false, { message: 'Incorrect username or password.' });
             }
-            else {
-                console.log('TESTING ONLY: Incorrect password. Password is ${user.password}');
-            }
-            return done(null, false, { message: 'Incorrect username or password.' });
+            return done(null, user);
+        } catch (err) {
+            return done(err);
         }
-        return done(null, user);
     }
 ));
 
@@ -60,8 +63,12 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser(async (id, done) => {
-    const user = await User.findById(id);
-    done(null, user);
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (err) {
+        done(err);
+    }
 });
 
 const ensureAuthenticated = (req, res, next) => {
@@ -73,15 +80,12 @@ const ensureAuthenticated = (req, res, next) => {
 
 // Routes
 app.post('/sign-in', (req, res, next) => {
-    console.log(`Received sign-in request for username: ${req.body.username}`);
     passport.authenticate('local', (err, user, info) => {
         if (err) {
             console.error('Error during authentication:', err);
             return next(err);
         }
         if (!user) {
-            console.log('Authentication failed:', info.message);
-            console.log(user)
             return res.status(401).send(info.message);
         }
         req.logIn(user, (err) => {
@@ -89,7 +93,6 @@ app.post('/sign-in', (req, res, next) => {
                 console.error('Error during login:', err);
                 return next(err);
             }
-            console.log('User authenticated successfully');
             return res.send('Authenticated');
         });
     })(req, res, next);
@@ -98,49 +101,60 @@ app.post('/sign-in', (req, res, next) => {
 app.post('/sign-up', async (req, res) => {
     const { username, password } = req.body;
     const user = new User({ username, password });
-    await user.save();
-    res.send('User registered');
+    try {
+        await user.save();
+        res.send('User registered');
+    } catch (err) {
+        console.error('Error registering user:', err);
+        res.status(500).send('Error registering user');
+    }
 });
 
 app.get('/tasks', ensureAuthenticated, async (req, res) => {
-    const tasks = await Task.find({ user: req.user._id });
-    res.json(tasks);
+    try {
+        const tasks = await Task.find({ user: req.user._id });
+        res.json(tasks);
+    } catch (err) {
+        console.error('Error fetching tasks:', err);
+        res.status(500).send('Error fetching tasks');
+    }
 });
 
 app.post('/submit', ensureAuthenticated, async (req, res) => {
     const newTask = new Task({ ...req.body, user: req.user._id });
-    await newTask.save();
-    res.status(201).send('Task added');
+    try {
+        await newTask.save();
+        res.status(201).send('Task added');
+    } catch (err) {
+        console.error('Error adding task:', err);
+        res.status(500).send('Error adding task');
+    }
 });
 
 app.post('/update-task', ensureAuthenticated, async (req, res) => {
     const { task, complete } = req.body;
-    await Task.updateOne({ task, user: req.user._id }, { complete });
-    res.send('Task updated');
+    try {
+        await Task.updateOne({ task, user: req.user._id }, { complete });
+        res.send('Task updated');
+    } catch (err) {
+        console.error('Error updating task:', err);
+        res.status(500).send('Error updating task');
+    }
 });
 
 app.post('/delete-task', ensureAuthenticated, async (req, res) => {
     const { task } = req.body;
-    await Task.deleteOne({ task, user: req.user._id });
-    res.send('Task deleted');
+    try {
+        await Task.deleteOne({ task, user: req.user._id });
+        res.send('Task deleted');
+    } catch (err) {
+        console.error('Error deleting task:', err);
+        res.status(500).send('Error deleting task');
+    }
 });
 
 app.get('/login', (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
-});
-
-app.post('/sign-up', async (req, res) => {
-    const { username, password } = req.body;
-    console.log(`Received sign-up request for username: ${username}`);
-    const user = new User({ username, password });
-    try {
-        await user.save();
-        console.log('User registered successfully');
-        res.send('User registered');
-    } catch (error) {
-        console.error('Error registering user:', error);
-        res.status(500).send('Error registering user');
-    }
 });
 
 app.get('/signup', (req, res) => {
