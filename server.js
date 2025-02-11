@@ -44,7 +44,7 @@ passport.use(new LocalStrategy(
                 console.log('User not found');
             }
             else {
-                console.log('Incorrect password. Password is ${user.password}');
+                console.log('TESTING ONLY: Incorrect password. Password is ${user.password}');
             }
             return done(null, false, { message: 'Incorrect username or password.' });
         }
